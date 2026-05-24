@@ -39,3 +39,11 @@ O sistema utiliza dados de painéis solares e informações climáticas (NASA PO
   python app.py
   Acesse em: http://127.0.0.1:5000
 
+---
+
+## 👥 Integrantes do Grupo
+- André Willian de Souza
+- Bruno Henrique Nunes da Rocha
+- Daniel Vitor Rodrigues Braatz
+- Gabriela Pereira Almagro
+- Luis Marcio Guitti
