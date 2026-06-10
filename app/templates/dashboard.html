@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Solar Tracking - Painel de Controle{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Painel de Filtros / Sidebar -->
+    <aside class="sidebar-filters card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-filter"></i> Filtros de Consulta</h3>
+        </div>
+        <form method="GET" action="{{ url_for('main.index') }}" class="filter-form">
+            <div class="form-group">
+                <label for="cliente"><i class="fa-solid fa-user"></i> Cliente</label>
+                <select name="cliente" id="cliente" class="form-control" required>
+                    <option value="" disabled {% if not selected_cliente %}selected{% endif %}>Selecione um cliente...</option>
+                    {% for c in clientes %}
+                        <option value="{{ c.nome }}" {% if selected_cliente == c.nome %}selected{% endif %}>
+                            {{ c.nome }} ({{ c.tipo_tracking | upper }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="start"><i class="fa-solid fa-calendar-day"></i> Data Inicial</label>
+                <input type="date" name="start" id="start" class="form-control" 
+                       value="{{ selected_start }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="end"><i class="fa-solid fa-calendar-day"></i> Data Final</label>
+                <input type="date" name="end" id="end" class="form-control" 
+                       value="{{ selected_end }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-chart-line"></i> Consultar
+            </button>
+        </form>
+
+        {% if error_msg %}
+            <div class="alert alert-danger">
+                <i class="fa-solid fa-triangle-exclamation"></i> {{ error_msg }}
+            </div>
+        {% endif %}
+
+        <!-- Informações do Cliente Selecionado -->
+        {% if has_results and cliente_info %}
+            <div class="client-info-box">
+                <div class="box-title"><i class="fa-solid fa-circle-info"></i> Detalhes do Cliente</div>
+                <div class="info-row">
+                    <span class="info-label">Nome:</span>
+                    <span class="info-val">{{ cliente_info.nome }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Endereço:</span>
+                    <span class="info-val">{{ cliente_info.endereco or 'Não cadastrado' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Telefone:</span>
+                    <span class="info-val">{{ cliente_info.telefone or 'Não cadastrado' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Área Painéis:</span>
+                    <span class="info-val">{{ cliente_info.area_paineis }} m²</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Eficiência:</span>
+                    <span class="info-val">{{ "%.1f" | format(cliente_info.eficiencia * 100) }}%</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Tracking:</span>
+                    <span class="badge badge-info">{{ cliente_info.tipo_tracking | upper }}</span>
+                </div>
+            </div>
+        {% endif %}
+    </aside>
+
+    <!-- Área Principal do Dashboard -->
+    <div class="main-dashboard-content">
+        {% if has_results %}
+            <!-- Cards de Métricas -->
+            <div class="metrics-row">
+                <div class="metric-card card">
+                    <div class="metric-icon real-color">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-label">Geração Real</span>
+                        <h2 class="metric-value">{{ metrics.total_real }} <span class="unit">kWh</span></h2>
+                        <span class="metric-subtext">Medido no período</span>
+                    </div>
+                </div>
+
+                <div class="metric-card card">
+                    <div class="metric-icon estimated-color">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-label">Geração Estimada</span>
+                        <h2 class="metric-value">{{ metrics.total_estimado }} <span class="unit">kWh</span></h2>
+                        <span class="metric-subtext">Cálculo NASA POWER</span>
+                    </div>
+                </div>
+
+                <div class="metric-card card">
+                    <div class="metric-icon diff-color-{{ metrics.diferenca_classe }}">
+                        <i class="fa-solid {% if metrics.diferenca_classe == 'success' %}fa-circle-arrow-up{% else %}fa-circle-arrow-down{% endif %}"></i>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-label">Desvio Absoluto</span>
+                        <h2 class="metric-value color-{{ metrics.diferenca_classe }}">{{ metrics.diferenca }} <span class="unit">kWh</span></h2>
+                        <span class="metric-subtext">Diferença (Real - Est.)</span>
+                    </div>
+                </div>
+
+                <div class="metric-card card">
+                    <div class="metric-icon perf-color">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-label">Índice Desempenho</span>
+                        <h2 class="metric-value">{{ metrics.desempenho }}</h2>
+                        <span class="metric-subtext">Temp. Média: {{ metrics.temp_media }}</span>
+                    </div>
+                </div>
+
+                <div class="metric-card card">
+                    <div class="metric-icon diff-color-{{ metrics.status_classe }}">
+                        <i class="fa-solid {% if metrics.status_classe == 'success' %}fa-circle-check{% else %}fa-triangle-exclamation{% endif %}"></i>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-label">Status</span>
+                        <h2 class="metric-value color-{{ metrics.status_classe }}">{{ metrics.status }}</h2>
+                        <span class="metric-subtext">Últimos 3 dias</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Principal (Chart.js Interativo) -->
+            <div class="chart-section card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-chart-area"></i> Comparativo de Energia: Real vs. Estimado</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="solarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabela de Dados e Relatório -->
+            <div class="table-section card">
+                <div class="card-header table-header-actions">
+                    <h3><i class="fa-solid fa-table-list"></i> Histórico Detalhado do Período</h3>
+                    <button class="btn btn-outline" onclick="toggleMatplotlib()">
+                        <i class="fa-solid fa-file-image"></i> Ver Gráfico Estático (Matplotlib)
+                    </button>
+                </div>
+                
+                <!-- Gráfico Matplotlib Collapsible -->
+                <div id="matplotlibWrapper" class="matplotlib-wrapper hidden">
+                    <div class="matplotlib-container card">
+                        <div class="card-header">
+                            <h4>Gráfico Backend Matplotlib (Exportação)</h4>
+                        </div>
+                        {% if plot_base64 %}
+                            <img src="data:image/png;base64,{{ plot_base64 }}" alt="Gráfico Solar Tracking Matplotlib" class="matplotlib-img" />
+                        {% else %}
+                            <p class="text-center text-muted">Erro ao renderizar gráfico backend.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table-waha">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>Real (kWh)</th>
+                                <th>Estimado (kWh)</th>
+                                <th>Diferença (kWh)</th>
+                                <th>Radiação (MJ/m²)</th>
+                                <th>Temp (°C)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in dados %}
+                            <tr>
+                                <td><strong>{{ d.data.strftime('%d/%m/%Y') }}</strong></td>
+                                <td>{{ d.cliente }}</td>
+                                <td class="text-right text-success">{{ "%.2f" | format(d.real) }}</td>
+                                <td class="text-right text-info">
+                                    {% if d.estimado is not none %}
+                                        {{ "%.2f" | format(d.estimado) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if d.diferenca is not none %}
+                                        <span class="badge {% if d.diferenca >= 0 %}badge-success{% else %}badge-danger{% endif %}">
+                                            {{ "%+.2f" | format(d.diferenca) }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">{{ "%.2f" | format(d.radiacao) if d.radiacao is not none else 'N/A' }}</td>
+                                <td class="text-right">{{ "%.1f" | format(d.temperatura) if d.temperatura is not none else 'N/A' }}°C</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Tela de Onboarding (Sem Resultados) -->
+            <div class="onboarding-card card text-center">
+                <i class="fa-solid fa-solar-panel onboarding-icon"></i>
+                <h2>Bem-vindo ao Solar Tracking Dashboard</h2>
+                <p>Selecione um cliente e defina o período desejado na barra lateral para analisar o rendimento de geração fotovoltaica real em relação à estimativa de radiação solar calculada com os dados históricos da NASA.</p>
+                <div class="onboarding-steps">
+                    <div class="step">
+                        <span class="step-num">1</span>
+                        <h4>Escolha o Cliente</h4>
+                        <p>Filtre por tipo de rastreamento (fixo, single ou dual-axis).</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">2</span>
+                        <h4>Defina o Período</h4>
+                        <p>Selecione datas válidas até o dia anterior de ontem.</p>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">3</span>
+                        <h4>Compare e Otimize</h4>
+                        <p>Analise desvios absolutos e curvas de rendimento.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fica de olho nos filtros pra rodar a busca sozinho sem precisar clicar em consultar
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.querySelector(".filter-form");
+        const clienteSelect = document.getElementById("cliente");
+        const startDateInput = document.getElementById("start");
+        const endDateInput = document.getElementById("end");
+
+        function rodarConsultaAutomatica() {
+            // Só envia automático se o usuário preencher o cliente e as duas datas
+            if (clienteSelect.value && startDateInput.value && endDateInput.value) {
+                form.submit();
+            }
+        }
+
+        if (clienteSelect) clienteSelect.addEventListener("change", rodarConsultaAutomatica);
+        if (startDateInput) startDateInput.addEventListener("change", rodarConsultaAutomatica);
+        if (endDateInput) endDateInput.addEventListener("change", rodarConsultaAutomatica);
+    });
+</script>
+
+{% if has_results and chart_data_json %}
+<script>
+    // Injetar os dados do Flask no escopo global para o main.js consumir
+    window.solarChartData = JSON.parse('{{ chart_data_json | safe }}');
+    
+    function toggleMatplotlib() {
+        const el = document.getElementById('matplotlibWrapper');
+        el.classList.toggle('hidden');
+    }
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endif %}
+{% endblock %}

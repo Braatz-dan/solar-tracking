@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Solar Tracking - {{ title }}{% endblock %}
+
+{% block content %}
+<div class="main-dashboard-content" style="max-width: 600px; margin: 0 auto;">
+    <!-- Feedback Alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' or category == 'danger' else category }} login-alert" style="margin-bottom: 1rem;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-user-gear"></i> {{ title }}</h3>
+        </div>
+        <form method="POST" action="{{ action_url }}" class="filter-form" style="padding: 2rem;">
+            <div class="form-group">
+                <label for="nome"><i class="fa-solid fa-signature"></i> Nome Completo / Identificação *</label>
+                <input type="text" name="nome" id="nome" class="form-control" 
+                       value="{{ client.nome if client else '' }}" required placeholder="Ex: Cliente A">
+            </div>
+
+            <div class="form-group">
+                <label for="endereco"><i class="fa-solid fa-map-location-dot"></i> Endereço</label>
+                <input type="text" name="endereco" id="endereco" class="form-control" 
+                       value="{{ client.endereco if client else '' }}" placeholder="Ex: Av. Paulista, 1000">
+            </div>
+
+            <div class="form-group">
+                <label for="telefone"><i class="fa-solid fa-phone"></i> Telefone de Contato</label>
+                <input type="text" name="telefone" id="telefone" class="form-control" 
+                       value="{{ client.telefone if client else '' }}" placeholder="Ex: (11) 99999-9999">
+            </div>
+
+            <div class="form-group">
+                <label for="area_paineis"><i class="fa-solid fa-ruler-combined"></i> Área Total dos Painéis (m²) *</label>
+                <input type="number" step="0.01" min="0.1" name="area_paineis" id="area_paineis" class="form-control" 
+                       value="{{ client.area_paineis if client else '' }}" required placeholder="Ex: 25.5">
+            </div>
+
+            <div class="form-group">
+                <label for="eficiencia"><i class="fa-solid fa-gauge"></i> Eficiência Nominal do Painel (%) *</label>
+                <input type="number" step="0.1" min="1.0" max="100.0" name="eficiencia" id="eficiencia" class="form-control" 
+                       value="{{ (client.eficiencia * 100) if client else '18.0' }}" required placeholder="Ex: 18.0">
+                <small style="color: var(--text-muted); font-size: 0.75rem;">Valores comuns: Monocristalino (~20%), Policristalino (~16%), Filme Fino (~10%).</small>
+            </div>
+
+            <div class="form-group">
+                <label for="tipo_tracking"><i class="fa-solid fa-arrows-spin"></i> Tipo de Rastreamento (Tracking) *</label>
+                <select name="tipo_tracking" id="tipo_tracking" class="form-control" required>
+                    <option value="" disabled {% if not client %}selected{% endif %}>Selecione...</option>
+                    <option value="fixo" {% if client and client.tipo_tracking == 'fixo' %}selected{% endif %}>FIXO</option>
+                    <option value="single" {% if client and client.tipo_tracking == 'single' %}selected{% endif %}>SINGLE-AXIS (1 Eixo)</option>
+                    <option value="dual" {% if client and client.tipo_tracking == 'dual' %}selected{% endif %}>DUAL-AXIS (2 Eixos)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Registro
+                </button>
+                <a href="{{ url_for('main.clientes_index') }}" class="btn btn-outline" style="flex: 1; text-align: center;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Solar Tracking - Dashboard{% endblock %}</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom WAHA Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navbar -->
+        <header class="app-header">
+            <div class="header-logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Solar Tracking Logo" class="logo-img">
+                <div class="logo-text">
+                    <h1>Solar Tracking</h1>
+                    <span>Monitoramento de Energia Solar</span>
+                </div>
+            </div>
+
+            {% if session.get('logged_in') %}
+            <nav class="header-nav">
+                <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="{{ url_for('main.clientes_index') }}" class="nav-link {% if 'clientes' in request.endpoint %}active{% endif %}">
+                    <i class="fa-solid fa-users"></i> Clientes
+                </a>
+                <a href="{{ url_for('main.logout') }}" class="nav-link nav-link-danger">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </a>
+            </nav>
+            {% endif %}
+
+            <div class="header-status">
+                <span class="status-indicator online"></span>
+                <span>Conectado à API NASA POWER</span>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="app-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Solar Tracking - Desenvolvimento de Software. Todos os direitos reservados.</p>
+        </footer>
+    </div>
+
+    <!-- Main JS -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

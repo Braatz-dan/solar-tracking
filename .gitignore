@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Banco de dados SQLite local
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de configuração da IDE Gemini/Antigravity
+.gemini/
+.gemini-ide/
+.system_generated/

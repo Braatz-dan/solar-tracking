@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Solar Tracking - Gerenciar Clientes{% endblock %}
+
+{% block content %}
+<div class="main-dashboard-content">
+    <!-- Feedback Alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' or category == 'danger' else category }} login-alert" style="margin-bottom: 1rem;">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card table-section">
+        <div class="card-header table-header-actions">
+            <h3><i class="fa-solid fa-users-gear"></i> Gerenciamento de Clientes</h3>
+            <a href="{{ url_for('main.clientes_create') }}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i> Cadastrar Novo Cliente
+            </a>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table-waha">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Endereço</th>
+                        <th>Telefone</th>
+                        <th>Área dos Painéis (m²)</th>
+                        <th>Eficiência</th>
+                        <th>Tipo de Rastreamento</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in clientes %}
+                    <tr>
+                        <td><strong>{{ c.nome }}</strong></td>
+                        <td>{{ c.endereco or 'Não informado' }}</td>
+                        <td>{{ c.telefone or 'Não informado' }}</td>
+                        <td>{{ "%.2f" | format(c.area_paineis) }} m²</td>
+                        <td>{{ "%.1f" | format(c.eficiencia * 100) }}%</td>
+                        <td>
+                            <span class="badge {% if c.tipo_tracking == 'dual' %}badge-success{% elif c.tipo_tracking == 'single' %}badge-info{% else %}badge-secondary{% endif %}">
+                                {{ c.tipo_tracking | upper }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('main.clientes_edit', id=c.id) }}" class="btn btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                                <i class="fa-solid fa-user-pen"></i> Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted" style="padding: 2rem;">
+                            Nenhum cliente cadastrado no momento.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
